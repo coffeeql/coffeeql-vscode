@@ -1,0 +1,133 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "CoffeeQL",
+  "scopeName": "source.coffeeql",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#booleans" },
+    { "include": "#null" },
+    { "include": "#keywords" },
+    { "include": "#aggregates" },
+    { "include": "#special-methods" },
+    { "include": "#functions" },
+    { "include": "#sort-direction" },
+    { "include": "#data-types" },
+    { "include": "#constraints" },
+    { "include": "#collection-structured" },
+    { "include": "#collection-unstructured" },
+    { "include": "#collection-keyvalue" },
+    { "include": "#operators" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.line.double-slash.coffeeql",
+      "match": "//.*$"
+    },
+    "strings": {
+      "name": "string.quoted.double.coffeeql",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.coffeeql",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.coffeeql",
+          "match": "\\b[0-9]+\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.coffeeql",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "booleans": {
+      "name": "constant.language.boolean.coffeeql",
+      "match": "\\b(true|false)\\b"
+    },
+    "null": {
+      "name": "constant.language.null.coffeeql",
+      "match": "\\bNULL\\b"
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.coffeeql",
+          "match": "\\.(where|give|sort|cup|blend|mix|pour|refill|spill|stream)(?=\\()"
+        },
+        {
+          "name": "keyword.other.toplevel.coffeeql",
+          "match": "\\b(shot|grind|menu)\\b"
+        },
+        {
+          "name": "keyword.other.coffeeql",
+          "match": "\\b(ON|as|FLEX)\\b"
+        }
+      ]
+    },
+    "aggregates": {
+      "name": "support.function.aggregate.coffeeql",
+      "match": "\\b(COUNT|SUM|AVG|MAX|MIN)(?=\\()"
+    },
+    "special-methods": {
+      "name": "support.function.method.coffeeql",
+      "match": "\\.(near|like|has|last|threshold)(?=\\()"
+    },
+    "functions": {
+      "name": "support.function.builtin.coffeeql",
+      "match": "\\b(uuid|now|today)(?=\\()"
+    },
+    "sort-direction": {
+      "name": "constant.language.sort.coffeeql",
+      "match": "\\b(ASC|DESC)\\b"
+    },
+    "data-types": {
+      "name": "storage.type.coffeeql",
+      "match": "\\b(UUID|TEXT|INT|INTEGER|FLOAT|BOOL|DATETIME|GEOPOINT|VECTOR)\\b"
+    },
+    "constraints": {
+      "name": "storage.modifier.coffeeql",
+      "match": "\\b(PRIMARY|UNIQUE|NOT NULL)\\b"
+    },
+    "collection-structured": {
+      "name": "entity.name.class.structured.coffeeql",
+      "match": "[a-zA-Z_][a-zA-Z0-9_]*(?=\\[\\])"
+    },
+    "collection-unstructured": {
+      "name": "entity.name.class.unstructured.coffeeql",
+      "match": "[a-zA-Z_][a-zA-Z0-9_]*(?=\\{\\})"
+    },
+    "collection-keyvalue": {
+      "name": "entity.name.class.keyvalue.coffeeql",
+      "match": "[a-zA-Z_][a-zA-Z0-9_]*:[a-zA-Z0-9_:*]*(?=\\{\\})"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.coffeeql",
+          "match": "(>=|<=|!=|>|<|=)"
+        },
+        {
+          "name": "punctuation.separator.coffeeql",
+          "match": "[,\\.]"
+        },
+        {
+          "name": "punctuation.bracket.coffeeql",
+          "match": "[\\[\\]{}()]"
+        }
+      ]
+    },
+    "identifiers": {
+      "name": "variable.other.coffeeql",
+      "match": "[a-zA-Z_][a-zA-Z0-9_]*"
+    }
+  }
+}
