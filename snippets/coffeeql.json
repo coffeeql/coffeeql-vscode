@@ -1,0 +1,142 @@
+{
+  "Basic Query": {
+    "prefix": "query",
+    "body": [
+      "${1:collection}[].where(${2:field} = ${3:value}).cup(${4:10})"
+    ],
+    "description": "Basic CoffeeQL query with where and cup"
+  },
+  "Query with Give": {
+    "prefix": "queryg",
+    "body": [
+      "${1:collection}[].where(${2:field} = ${3:value}).give(${4:field1}, ${5:field2}).cup(${6:10})"
+    ],
+    "description": "CoffeeQL query with where, give and cup"
+  },
+  "Query with Sort": {
+    "prefix": "querys",
+    "body": [
+      "${1:collection}[].where(${2:field} = ${3:value}).give(${4:fields}).sort(${5:field}, ${6|ASC,DESC|}).cup(${7:10})"
+    ],
+    "description": "CoffeeQL query with sort"
+  },
+  "Insert (Pour)": {
+    "prefix": "pour",
+    "body": [
+      "${1:collection}[].pour({ ${2:field}: ${3:value} })"
+    ],
+    "description": "Insert a new record"
+  },
+  "Update (Refill)": {
+    "prefix": "refill",
+    "body": [
+      "${1:collection}[].where(${2:id} = ${3:value}).refill({ ${4:field}: ${5:value} })"
+    ],
+    "description": "Update existing records"
+  },
+  "Delete (Spill)": {
+    "prefix": "spill",
+    "body": [
+      "${1:collection}[].where(${2:field} = ${3:value}).spill()"
+    ],
+    "description": "Delete matching records"
+  },
+  "Join (Mix)": {
+    "prefix": "mix",
+    "body": [
+      "${1:users}[].mix(${2:orders}[] ON ${1:users}[].id = ${2:orders}[].${3:user_id}).give(${4:fields}).cup(${5:10})"
+    ],
+    "description": "Join two collections"
+  },
+  "Group By (Blend)": {
+    "prefix": "blend",
+    "body": [
+      "${1:collection}[].where(${2:condition}).blend(${3:field}).give(${3:field}, COUNT() as ${4:count}).cup(${5:10})"
+    ],
+    "description": "Group by with aggregate"
+  },
+  "Document Query": {
+    "prefix": "docquery",
+    "body": [
+      "${1:collection}{}.where(${2:field} = ${3:value}).cup(${4:10})"
+    ],
+    "description": "Query a document collection"
+  },
+  "Key-Value Query": {
+    "prefix": "kvquery",
+    "body": [
+      "${1:namespace}:${2:key}{}.where(${3:field} = ${4:value})"
+    ],
+    "description": "Query a key-value collection"
+  },
+  "Geo Near Query": {
+    "prefix": "near",
+    "body": [
+      "${1:collection}{}.where(${2:location}.near(${3:lat}, ${4:lon}, ${5:5}km)).cup(${6:10})"
+    ],
+    "description": "Geolocation proximity query"
+  },
+  "Vector Similarity": {
+    "prefix": "like",
+    "body": [
+      "${1:collection}{}.where(${2:embedding}.like(${3:\"search query\"}).threshold(${4:0.85})).cup(${5:10})"
+    ],
+    "description": "Vector similarity search"
+  },
+  "Time Window": {
+    "prefix": "last",
+    "body": [
+      "${1:collection}{}.where(${2:timestamp}.last(${3:7}${4|d,h,m,s|})).cup(${5:10})"
+    ],
+    "description": "Time-based filter"
+  },
+  "Schema (Grind)": {
+    "prefix": "grind",
+    "body": [
+      "grind ${1:collection}[] (",
+      "  id      UUID    PRIMARY,",
+      "  ${2:field} ${3|TEXT,INT,FLOAT,BOOL,UUID,DATETIME|} ${4|NOT NULL,UNIQUE,|}",
+      ")"
+    ],
+    "description": "Define a collection schema"
+  },
+  "Shot (Batch)": {
+    "prefix": "shot",
+    "body": [
+      "shot {",
+      "  ${1:collection}[].where(${2:condition}).cup(${3:10})",
+      "  ${4:collection}[].where(${5:condition}).cup(${6:10})",
+      "}"
+    ],
+    "description": "Batch multiple queries"
+  },
+  "Menu (Inspect)": {
+    "prefix": "menu",
+    "body": [
+      "menu(${1:collection}[])"
+    ],
+    "description": "Inspect collection schema"
+  },
+  "Streaming Query": {
+    "prefix": "stream",
+    "body": [
+      "${1:collection}[].where(${2:condition}).give(${3:fields}).stream()"
+    ],
+    "description": "Streaming query (v0.5.0)"
+  },
+  "Count Aggregate": {
+    "prefix": "count",
+    "body": [
+      "${1:collection}[].blend(${2:field}).give(${2:field}, COUNT() as ${3:total}).cup(${4:10})"
+    ],
+    "description": "Count with group by"
+  },
+  "Raw passthrough": {
+    "prefix": "raw",
+    "body": [
+      "// Raw passthrough — bypasses CoffeeQL parser",
+      "// Use in code: db.raw(\"${1:SELECT * FROM users}\", { trace: \"${2:label}\" })"
+    ],
+    "description": "Raw query passthrough"
+  }
+}
