@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run compile
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Validate grammar JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('syntaxes/coffeeql.tmLanguage.json','utf8')); console.log('✅ grammar valid')"
+
+      - name: Validate snippets JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('snippets/coffeeql.json','utf8')); console.log('✅ snippets valid')"
+
+      - name: Validate language configuration JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('language-configuration.json','utf8')); console.log('✅ language config valid')"
+
+      - name: Validate package JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('✅ package.json valid')"
+
+      - name: Check package can be built
+        run: npx vsce package --no-dependencies --out /tmp/coffeeql-test.vsix
+
+      - name: Verify .vsix was created
+        run: |
+          if [ -f /tmp/coffeeql-test.vsix ]; then
+            echo "✅ .vsix package created successfully"
+            ls -lh /tmp/coffeeql-test.vsix
+          else
+            echo "❌ .vsix not found"
+            exit 1
+          fi
