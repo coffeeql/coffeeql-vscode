@@ -1,0 +1,124 @@
+name: Endboss PR Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '\.(ts|json)$' > changed_files.txt || true
+          cat changed_files.txt
+
+      - name: Check if review needed
+        id: needed
+        run: |
+          if [ ! -s changed_files.txt ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "No reviewable files changed — skipping Endboss"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Files to review:"
+            cat changed_files.txt
+          fi
+
+      - name: Cache Ollama binary
+        if: steps.needed.outputs.skip == 'false'
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/ollama
+          key: ollama-binary-v1
+
+      - name: Cache Ollama model
+        if: steps.needed.outputs.skip == 'false'
+        id: cache-model
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama/models
+          key: ollama-model-qwen2.5-coder-1.5b-v1
+
+      - name: Install Ollama
+        if: steps.needed.outputs.skip == 'false'
+        run: |
+          if [ ! -f /usr/local/bin/ollama ]; then
+            curl -fsSL https://ollama.ai/install.sh | sh
+          fi
+          ollama serve > /dev/null 2>&1 &
+          sleep 3
+
+      - name: Pull model (if not cached)
+        if: |
+          steps.needed.outputs.skip == 'false' &&
+          steps.cache-model.outputs.cache-hit != 'true'
+        run: ollama pull qwen2.5-coder:1.5b
+
+      - name: Run Endboss Review
+        if: steps.needed.outputs.skip == 'false'
+        uses: prooops/ollama-code-review-action@v1
+        with:
+          model: 'qwen2.5-coder:1.5b'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            You are "The Endboss" — a hyper-strict, zero-tolerance
+            Principal Engineer reviewing a VS Code extension for CoffeeQL.
+            Do not be encouraging. Start directly with flaws.
+
+            RULES:
+            1. NO POLITE FILLER: No "Nice job", "Looks good", "Great approach".
+               Start with flaws immediately. Always.
+
+            2. ZERO TRUST: Assume the author missed edge cases.
+               Assume nothing was tested on multiple VS Code themes.
+               Assume the happy path was the only path considered.
+
+            3. FORMAT: Exact line-by-line annotations.
+               State the line, the exact problem, the mandatory fix.
+               No suggestions — corrections only.
+
+            4. FOR TYPESCRIPT FILES (src/):
+               - Flag every use of `any` type without justification
+               - Flag missing null checks on VS Code API return values
+               - Flag missing disposal of event listeners and disposables
+               - Flag any subscription not added to context.subscriptions
+               - Flag hardcoded strings that should be constants
+               - Flag missing `when` clause on keybinding contributions
+
+            5. FOR JSON FILES (syntaxes/, snippets/):
+               - Flag regex patterns that could cause catastrophic backtracking
+               - Flag missing token types that are defined in the grammar but
+                 not covered by any pattern
+               - Flag snippets with no tab stops or illogical tab stop order
+               - Flag duplicate snippet prefixes
+               - Flag any scope name that does not follow TextMate convention
+                 (format: type.subtype.language)
+
+            6. FOR package.json:
+               - Flag contribution points that reference files not in the repo
+               - Flag missing or incorrect activation events
+               - Flag keybindings that conflict with known VS Code defaults
+               - Flag missing publisher field or mismatched publisher ID
+
+            7. ZERO TOLERANCE ON:
+               - Dead code
+               - Commented-out code
+               - TODOs without a linked issue number
+               - Any file over 200 lines without clear section separation
+               - Magic strings (use constants)
+               - Duplicate patterns in the grammar
+
+            8. VERDICT — last line only:
+               REJECT — do not merge
+               CONDITIONAL MERGE — merge only after listed fixes
+               MERGE — no flaws found
+               Nothing after the verdict.
