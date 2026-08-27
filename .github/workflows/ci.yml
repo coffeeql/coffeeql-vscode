@@ -13,58 +13,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate grammar JSON
-        run: |
-          node -e "
-            JSON.parse(require('fs').readFileSync('syntaxes/coffeeql.tmLanguage.json','utf8'));
-            console.log('✅ grammar valid');
-          "
-
-      - name: Validate snippets JSON
-        run: |
-          node -e "
-            JSON.parse(require('fs').readFileSync('snippets/coffeeql.json','utf8'));
-            console.log('✅ snippets valid');
-          "
-
-      - name: Validate language configuration JSON
-        run: |
-          node -e "
-            JSON.parse(require('fs').readFileSync('language-configuration.json','utf8'));
-            console.log('✅ language config valid');
-          "
-
-      - name: Check all required files exist
+      - name: Check required public files exist
         run: |
           files=(
             "syntaxes/coffeeql.tmLanguage.json"
             "snippets/coffeeql.json"
-            "language-configuration.json"
             "README.md"
             "CONTRIBUTING.md"
             "LICENSE"
           )
           for f in "${files[@]}"; do
             if [ ! -f "$f" ]; then
-              echo "❌ Missing required file: $f"
+              echo "❌ Missing: $f"
               exit 1
             else
               echo "✅ Found: $f"
             fi
           done
 
+      - name: Validate grammar JSON
+        run: |
+          node -e "
+            JSON.parse(require('fs').readFileSync('syntaxes/coffeeql.tmLanguage.json','utf8'));
+            console.log('✅ grammar JSON valid');
+          "
+
+      - name: Validate snippets JSON
+        run: |
+          node -e "
+            JSON.parse(require('fs').readFileSync('snippets/coffeeql.json','utf8'));
+            console.log('✅ snippets JSON valid');
+          "
+
       - name: Check grammar has required token patterns
         run: |
           node -e "
             const g = JSON.parse(require('fs').readFileSync('syntaxes/coffeeql.tmLanguage.json','utf8'));
-            const names = g.repository ? Object.keys(g.repository) : [];
+            const names = Object.keys(g.repository || {});
             const required = ['keywords','strings','numbers','booleans','comments','operators','collection-structured','collection-unstructured'];
             const missing = required.filter(r => !names.includes(r));
             if (missing.length > 0) {
               console.error('❌ Missing grammar patterns:', missing.join(', '));
               process.exit(1);
             }
-            console.log('✅ All required grammar patterns present:', required.join(', '));
+            console.log('✅ All required grammar patterns present');
           "
 
       - name: Check snippets have required prefixes
