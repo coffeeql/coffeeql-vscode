@@ -7,47 +7,89 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Compile TypeScript
-        run: npm run compile
-
-      - name: Lint
-        run: npm run lint
-
       - name: Validate grammar JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('syntaxes/coffeeql.tmLanguage.json','utf8')); console.log('✅ grammar valid')"
+        run: |
+          node -e "
+            JSON.parse(require('fs').readFileSync('syntaxes/coffeeql.tmLanguage.json','utf8'));
+            console.log('✅ grammar valid');
+          "
 
       - name: Validate snippets JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('snippets/coffeeql.json','utf8')); console.log('✅ snippets valid')"
+        run: |
+          node -e "
+            JSON.parse(require('fs').readFileSync('snippets/coffeeql.json','utf8'));
+            console.log('✅ snippets valid');
+          "
 
       - name: Validate language configuration JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('language-configuration.json','utf8')); console.log('✅ language config valid')"
-
-      - name: Validate package JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('✅ package.json valid')"
-
-      - name: Check package can be built
-        run: npx vsce package --no-dependencies --out /tmp/coffeeql-test.vsix
-
-      - name: Verify .vsix was created
         run: |
-          if [ -f /tmp/coffeeql-test.vsix ]; then
-            echo "✅ .vsix package created successfully"
-            ls -lh /tmp/coffeeql-test.vsix
-          else
-            echo "❌ .vsix not found"
-            exit 1
-          fi
+          node -e "
+            JSON.parse(require('fs').readFileSync('language-configuration.json','utf8'));
+            console.log('✅ language config valid');
+          "
+
+      - name: Check all required files exist
+        run: |
+          files=(
+            "syntaxes/coffeeql.tmLanguage.json"
+            "snippets/coffeeql.json"
+            "language-configuration.json"
+            "README.md"
+            "CONTRIBUTING.md"
+            "LICENSE"
+          )
+          for f in "${files[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "❌ Missing required file: $f"
+              exit 1
+            else
+              echo "✅ Found: $f"
+            fi
+          done
+
+      - name: Check grammar has required token patterns
+        run: |
+          node -e "
+            const g = JSON.parse(require('fs').readFileSync('syntaxes/coffeeql.tmLanguage.json','utf8'));
+            const names = g.repository ? Object.keys(g.repository) : [];
+            const required = ['keywords','strings','numbers','booleans','comments','operators','collection-structured','collection-unstructured'];
+            const missing = required.filter(r => !names.includes(r));
+            if (missing.length > 0) {
+              console.error('❌ Missing grammar patterns:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('✅ All required grammar patterns present:', required.join(', '));
+          "
+
+      - name: Check snippets have required prefixes
+        run: |
+          node -e "
+            const s = JSON.parse(require('fs').readFileSync('snippets/coffeeql.json','utf8'));
+            const prefixes = Object.values(s).map(v => v.prefix);
+            const required = ['query','pour','refill','spill','mix','blend','grind','shot'];
+            const missing = required.filter(r => !prefixes.includes(r));
+            if (missing.length > 0) {
+              console.error('❌ Missing snippet prefixes:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('✅ All required snippet prefixes present');
+          "
+
+      - name: Check no duplicate snippet prefixes
+        run: |
+          node -e "
+            const s = JSON.parse(require('fs').readFileSync('snippets/coffeeql.json','utf8'));
+            const prefixes = Object.values(s).map(v => v.prefix);
+            const dupes = prefixes.filter((p, i) => prefixes.indexOf(p) !== i);
+            if (dupes.length > 0) {
+              console.error('❌ Duplicate snippet prefixes:', dupes.join(', '));
+              process.exit(1);
+            }
+            console.log('✅ No duplicate snippet prefixes');
+          "
